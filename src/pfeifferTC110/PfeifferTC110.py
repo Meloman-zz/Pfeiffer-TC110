@@ -320,6 +320,29 @@ class TC110:
         status = {'Running':running, 'Speed':speed, 'Pressure':pressure}
         return status
 
+    def get_message(self, command_key, query_only=True, payload='=?'):
+        command = self.commands[command_key]
+        param_number = str(command["number"])
+        action = '00' if query_only else '10'
+        payload_length = '02' if query_only else self.data_types[command["data type"]]["length"]
+        message_string = '001'+action+param_number+payload_length+payload
+        checksum = self._calculate_checksum(message_string)
+        full_message = message_string+checksum
+        logging.debug(f'Sending: {full_message}')
+        return full_message
+	
+    def get_all_messages(self, device_id='001', query_only=True, payload='=?'):
+        for key in self.commands:
+            command = self.commands[key]
+            param_number = str(command["number"])
+            action = '00' if query_only else '10'
+            payload_length = '02' if query_only else self.data_types[command["data type"]]["length"]
+            message_string = device_id+action+param_number+payload_length+payload
+            checksum = self._calculate_checksum(message_string)
+            full_message = message_string+checksum
+            print('{}: {}'.format(key, full_message))
+        return True
+    
     def run_timed(self, seconds):
         try:
             self.timer = BoolTimer(seconds)
